@@ -45,7 +45,6 @@ function App() {
     if (abaAtiva === 'saque') {
       setContaSelecionada(numero)
     } else {
-      // lógica de seleção de dois cliques (origem e destino)
       if (contaSelecionada === numero) {
         setContaSelecionada('')
         setContaDestino('')
@@ -124,7 +123,10 @@ function App() {
     if (!contaSelecionada) {
       return <>selecione a conta de <span style={{color: 'var(--danger)'}}>origem</span></>
     }
-    return <>selecione a conta de <span style={{color: 'var(--success)'}}>destino</span></>
+    if (!contaDestino) {
+      return <>selecione a conta de <span style={{color: 'var(--success)'}}>destino</span></>
+    }
+    return <>informe a quantia da transferência</>
   }
 
   const getCardClass = (numero) => {
@@ -176,9 +178,11 @@ function App() {
           <h2 style={{ marginBottom: '4px', fontSize: '1.2rem', color: 'var(--text-muted)' }}>
             {renderTitulo()}
           </h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-            clique novamente sobre uma conta para desmarcá-la
-          </p>
+          {abaAtiva === 'transferencia' && (
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+              (clique novamente sobre uma conta para desmarcá-la)
+            </p>
+          )}
           
           {loading ? (
             <p>carregando...</p>
@@ -222,6 +226,10 @@ function App() {
           </form>
         </section>
       </main>
+
+      <footer style={{ textAlign: 'center', margin: '32px 0 16px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+        victorgmoreno014@gmail.com | Victor Gabriel Moreno
+      </footer>
     </div>
   )
 }
