@@ -33,7 +33,7 @@ class AccountService:
     # transferência
     @staticmethod
     @transaction.atomic # protege o banco: ou salva as duas contas ou desfaz
-    def transer(dto: TransferDTO) -> dict:
+    def transfer(dto: TransferDTO) -> dict:
         if dto.amount <= 0:
             raise ValidationError("Amount must be greather than zero")
 
