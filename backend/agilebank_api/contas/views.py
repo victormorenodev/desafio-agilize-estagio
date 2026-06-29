@@ -53,7 +53,8 @@ class TransferView(APIView):
 
             return Response({
                 "message": "Transfer successful",
-                "source_balance": str(result["source_balance"])
+                "source_balance": str(result["source_balance"]),
+                "destination_balance": str(result["destination_balance"])
             }, status=status.HTTP_200_OK)
 
         except InvalidOperation:
