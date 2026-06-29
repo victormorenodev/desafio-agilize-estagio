@@ -6,6 +6,7 @@ from rest_framework import status
 from django.core.exceptions import ValidationError
 from .services import AccountService
 from .dtos import WithdrawDTO, TransferDTO
+from .models import Account
 
 # view (controller) do saque
 class WithdrawView(APIView):
@@ -61,3 +62,21 @@ class TransferView(APIView):
             return Response({"error": "Invalid amount format."}, status=status.HTTP_400_BAD_REQUEST)
         except ValidationError as e:
             return Response({"error": e.messages[0]}, status=status.HTTP_400_BAD_REQUEST)
+
+# como não há regra de negócio, será direto na layer de view
+class AccountListView(APIView):
+    def get(self, request):
+        # busca todas as contas do banco
+        accounts = Account.objects.all()
+
+        # converte as contas em JSON
+        data = [
+            {
+                "account_number": acc.account_number,
+                "account_type": acc.get_account_type_display(),
+                "balance": str(acc.balance)
+            }
+            for acc in accounts
+        ]
+
+        return Response(data, status=status.HTTP_200_OK)
