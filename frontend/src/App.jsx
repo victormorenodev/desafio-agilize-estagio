@@ -4,12 +4,13 @@ import './App.css'
 function App() {
   const [contas, setContas] = useState([])
   const [loading, setLoading] = useState(true)
-  const [mensagem, setMensagem] = useState(null) // para o popup
+  const [mensagem, setMensagem] = useState(null)
   
+  const [abaAtiva, setAbaAtiva] = useState('saque')
   const [contaSelecionada, setContaSelecionada] = useState('')
-  const [valorSaque, setValorSaque] = useState('')
+  const [contaDestino, setContaDestino] = useState('')
+  const [valorOperacao, setValorOperacao] = useState('')
 
-  // busca contas
   const carregarContas = async () => {
     try {
       const response = await fetch('http://127.0.0.1:8000/api/contas/list/')
@@ -28,20 +29,39 @@ function App() {
     carregarContas()
   }, [])
 
-  // função utilitária para o popup sumir sozinho
   const exibirPopup = (tipo, texto) => {
     setMensagem({ tipo, texto })
-    setTimeout(() => setMensagem(null), 3000)
+    setTimeout(() => setMensagem(null), 3500)
   }
 
-  // função para sacar
+  const alternarAba = (aba) => {
+    setAbaAtiva(aba)
+    setValorOperacao('')
+    setContaSelecionada('')
+    setContaDestino('')
+  }
+
+  const handleCardClick = (numero) => {
+    if (abaAtiva === 'saque') {
+      setContaSelecionada(numero)
+    } else {
+      // lógica de seleção de dois cliques (origem e destino)
+      if (contaSelecionada === numero) {
+        setContaSelecionada('')
+        setContaDestino('')
+      } else if (!contaSelecionada) {
+        setContaSelecionada(numero)
+      } else if (contaDestino === numero) {
+        setContaDestino('')
+      } else {
+        setContaDestino(numero)
+      }
+    }
+  }
+
   const handleSaque = async (e) => {
     e.preventDefault()
-    
-    if (!contaSelecionada) {
-      exibirPopup('error', 'selecione uma conta clicando nela')
-      return
-    }
+    if (!contaSelecionada) return exibirPopup('error', 'selecione a conta de origem')
 
     try {
       const response = await fetch('http://127.0.0.1:8000/api/contas/withdraw/', {
@@ -49,27 +69,77 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           account_number: contaSelecionada,
-          amount: parseFloat(valorSaque)
+          amount: parseFloat(valorOperacao)
         })
       })
-      
       const data = await response.json()
       
       if (response.ok) {
         exibirPopup('success', 'saque realizado com sucesso!')
-        setValorSaque('')
+        setValorOperacao('')
         carregarContas()
       } else {
-        exibirPopup('error', data.error || 'erro ao realizar saque')
+        exibirPopup('error', data.error || 'erro no saque')
       }
     } catch (error) {
-      exibirPopup('error', 'erro de conexão com a api')
+      exibirPopup('error', 'erro de conexão')
     }
+  }
+
+  const handleTransferencia = async (e) => {
+    e.preventDefault()
+    if (!contaSelecionada) return exibirPopup('error', 'selecione a conta de origem')
+    if (!contaDestino) return exibirPopup('error', 'selecione a conta de destino')
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/contas/transfer/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source_account_number: contaSelecionada,
+          destination_account_number: contaDestino,
+          amount: parseFloat(valorOperacao)
+        })
+      })
+      const data = await response.json()
+      
+      if (response.ok) {
+        exibirPopup('success', 'transferência realizada!')
+        setValorOperacao('')
+        setContaSelecionada('')
+        setContaDestino('')
+        carregarContas()
+      } else {
+        exibirPopup('error', data.error || 'erro na transferência')
+      }
+    } catch (error) {
+      exibirPopup('error', 'erro de conexão')
+    }
+  }
+
+  const renderTitulo = () => {
+    if (abaAtiva === 'saque') {
+      return <>selecione a conta para saque</>
+    }
+    if (!contaSelecionada) {
+      return <>selecione a conta de <span style={{color: 'var(--danger)'}}>origem</span></>
+    }
+    return <>selecione a conta de <span style={{color: 'var(--success)'}}>destino</span></>
+  }
+
+  const getCardClass = (numero) => {
+    let classes = 'account-card simple-panel'
+    if (abaAtiva === 'saque') {
+      if (contaSelecionada === numero) classes += ' selected'
+    } else {
+      if (contaSelecionada === numero) classes += ' selected-origin'
+      if (contaDestino === numero) classes += ' selected-dest'
+    }
+    return classes
   }
 
   return (
     <div className="app-container">
-      {/* popup flutuante */}
       {mensagem && (
         <div className={`popup ${mensagem.tipo}`}>
           {mensagem.texto}
@@ -87,10 +157,28 @@ function App() {
       </header>
 
       <main className="simple-panel">
+        <div className="tabs">
+          <button 
+            className={`tab-btn ${abaAtiva === 'saque' ? 'active' : ''}`}
+            onClick={() => alternarAba('saque')}
+          >
+            saque
+          </button>
+          <button 
+            className={`tab-btn ${abaAtiva === 'transferencia' ? 'active' : ''}`}
+            onClick={() => alternarAba('transferencia')}
+          >
+            transferência
+          </button>
+        </div>
+
         <section>
-          <h2 style={{ marginBottom: '16px', fontSize: '1.2rem', color: 'var(--text-muted)' }}>
-            selecione sua conta
+          <h2 style={{ marginBottom: '4px', fontSize: '1.2rem', color: 'var(--text-muted)' }}>
+            {renderTitulo()}
           </h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+            clique novamente sobre uma conta para desmarcá-la
+          </p>
           
           {loading ? (
             <p>carregando...</p>
@@ -99,8 +187,8 @@ function App() {
               {contas.map(conta => (
                 <div 
                   key={conta.account_number}
-                  className={`account-card simple-panel ${contaSelecionada === conta.account_number ? 'selected' : ''}`}
-                  onClick={() => setContaSelecionada(conta.account_number)}
+                  className={getCardClass(conta.account_number)}
+                  onClick={() => handleCardClick(conta.account_number)}
                 >
                   <h3>{conta.account_type}</h3>
                   <p>{conta.account_number}</p>
@@ -113,12 +201,8 @@ function App() {
           )}
         </section>
 
-        <section className="actions-panel">
-          <h2 style={{ marginBottom: '8px', fontSize: '1.2rem', color: 'var(--text-muted)' }}>
-            realizar saque
-          </h2>
-          
-          <form onSubmit={handleSaque} className="input-group">
+        <section className="actions-panel" style={{ marginTop: '24px' }}>
+          <form onSubmit={abaAtiva === 'saque' ? handleSaque : handleTransferencia} className="input-group">
             <div className="input-group">
               <label>valor (R$)</label>
               <input 
@@ -126,14 +210,14 @@ function App() {
                 step="0.01"
                 min="0.01"
                 placeholder="ex: 50.00"
-                value={valorSaque}
-                onChange={(e) => setValorSaque(e.target.value)}
+                value={valorOperacao}
+                onChange={(e) => setValorOperacao(e.target.value)}
                 required
               />
             </div>
             
             <button type="submit" className="btn-primary" style={{ marginTop: '16px' }}>
-              sacar
+              {abaAtiva === 'saque' ? 'sacar dinheiro' : 'enviar transferência'}
             </button>
           </form>
         </section>
