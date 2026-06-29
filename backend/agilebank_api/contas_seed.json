@@ -1,0 +1,29 @@
+[
+  {
+    "model": "contas.account",
+    "pk": 1,
+    "fields": {
+      "account_number": "12345-6",
+      "account_type": "CC",
+      "balance": "1000.00"
+    }
+  },
+  {
+    "model": "contas.account",
+    "pk": 2,
+    "fields": {
+      "account_number": "78901-2",
+      "account_type": "CP",
+      "balance": "500.00"
+    }
+  },
+  {
+    "model": "contas.account",
+    "pk": 3,
+    "fields": {
+      "account_number": "34567-8",
+      "account_type": "CC",
+      "balance": "250.00"
+    }
+  }
+]
