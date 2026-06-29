@@ -21,3 +21,16 @@ build/
 .vscode/
 .DS_Store
 *.swp
+
+# Variáveis de Ambiente
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Django Banco de Dados
+db.sqlite3
+db.sqlite3-journal
+*.sqlite3
